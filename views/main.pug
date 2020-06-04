@@ -1,0 +1,32 @@
+extends layout
+
+block layout-content
+  div.View.MainView
+    h1.Banner Synesthesia
+    div.Message
+      div.Title
+        h3 Generate a playlist
+        div.NavButtons
+          a(href="/playlist")
+              div.NavButton make playlist
+    div.Message
+      div.Title
+        h3 Enter a color and up to 5 songs or artists
+      form(method='GET' action='/generate')
+        div.form-group
+            label(for='color') Color
+            input#color.form-control(type='text', placeholder='Yellow', name='color')
+        div.form-group
+
+            label(for='seed') Artist
+            input#seed.form-control(type='text', placeholder='Hippo Campus', name='artist-seed')
+            button.btn add
+        div.form-group
+            label(for='seed') Song
+            input#seed.form-control(type='text', placeholder='Driving to Hawaii', name='song-seed')
+            button.btn add
+        div.NavButtons
+            button.NavButton(type="submit") generate
+
+
+
