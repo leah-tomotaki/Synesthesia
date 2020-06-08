@@ -30,10 +30,12 @@ app.use(express.static(__dirname + '/public'))
 /**
  *  Constants
  */
-const CLIENT_ID = 'CLIENT_ID'
-const CLIENT_SECRET = 'CLIENT_SECRET'
-const REDIRECT_URI = 'REDIRECT_URI'
-
+//const CLIENT_ID = 'CLIENT_ID'
+//const CLIENT_SECRET = 'CLIENT_SECRET'
+//const REDIRECT_URI = 'REDIRECT_URI'
+CLIENT_ID = 'd1ab6b53b0054febb8e5879090c69481'
+CLIENT_SECRET = 'bb9729962a4b45a0b638854d5459f988'
+REDIRECT_URI = 'http://localhost:8888/callback'
 /**
  *  Helper Functions
  */
@@ -123,7 +125,7 @@ app.get('/callback', (req, res) =>{
         };
         // use the access token to access the Spotify Web API
         request.get(options, (error, response, body) =>{
-          console.log(body);
+          console.log(body.display_name);
         });
 
         // we can also pass the token to the browser to make requests from there
@@ -198,6 +200,25 @@ app.get("/playlist", (req, res) => {
     });
 });
 
+app.get('/search/artist', (req, res) => {
+   var artistSeed = req.query.artist_seed === undefined ? '4NHQUGzhtTLFvgF5SZesLK' : req.query.artist_seed;
+   var searchOptions = {
+        url: 'https://api.spotify.com/v1/search?' +
+            querystring.stringify({
+                q: artistSeed.replace(' ', '+'),
+                type: 'artist',
+            }),
+        headers: { 'Authorization': 'Bearer ' + access_token }
+   };
+   request.get(searchOptions, (error, response, body) =>{
+          var obj = JSON.parse(body);
+          console.log(obj.artists.items);
+          res.render("dropdown", {
+             artists: obj.artists.items
+          });
+   });
+});
+
 app.get('/generate', (req, res) => {
     var seed = '4NHQUGzhtTLFvgF5SZesLK';
     var color = 'Yellow';
@@ -218,6 +239,7 @@ app.get('/generate', (req, res) => {
     request.get(searchOptions, (error, response, body) =>{
           console.log(body);
     });
+
 
 
 //    var options = {

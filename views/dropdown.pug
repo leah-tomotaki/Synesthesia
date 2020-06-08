@@ -13,9 +13,11 @@ block layout-content
       div.Title
         h3 Enter a color and up to 5 songs or artists
       form(method='GET' action='/search/artist')
-        label(for='artist_seed') Artist
-        input#artist-seed.form-control(type='text', placeholder='Hippo Campus', name='artist_seed')
-        button.btn search
+        label(for='artist-seed') Artist
+        select(name='dropDown' id=' ')
+            each artist in artists
+                option=artist.name
+            input(type='submit', value='Submit')
         div.form-group
             label(for='color') Color
             input#color.form-control(type='text', placeholder='Yellow', name='color')
@@ -25,3 +27,4 @@ block layout-content
             button.btn add
         div.NavButtons
             button.NavButton(type="submit") generate
+      h3 #{artist}
