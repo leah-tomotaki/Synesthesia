@@ -59,6 +59,7 @@ var generateRandomString = function(length) {
  * Routes Definitions
  */
 
+
 app.get("/", (req, res) => {
   res.render("index", { title: "Welcome" });
 });
@@ -67,6 +68,9 @@ app.get("/", (req, res) => {
 console.log('Send to Spotify for login');
 var access_token = '';
 var user_id = '';
+
+var artistList = {};
+var trackList = {};
 
 var stateKey = 'spotify_auth_state';
 
@@ -83,6 +87,8 @@ app.get("/login", (req, res) => {
         state: state,
         scope: scope
     }));
+    artistList = {};
+    trackList = {};
 });
 
 app.get('/callback', (req, res) =>{
@@ -166,12 +172,23 @@ app.get('/refresh_token', (req, res) =>{
 });
 
 app.get('/home', (req, res) => {
-    console.log("login successful!");
-    res.render("main", {title: "Home"});
-//    var color = req.query.color;
-//    var seed = req.query.seed;
-//    console.log('color: '+color);
-//    console.log('seed: '+seed);
+    if(Object.keys(trackList).length + Object.keys(artistList).length < 5) {
+        if(req.query.artist !== undefined ) {
+            var artistObj = JSON.parse(req.query.artist);
+            artistList[artistObj.name] = artistObj.id;
+            console.log(artistList);
+        }
+        if(req.query.track !== undefined) {
+            var trackObj = JSON.parse(req.query.track);
+            trackList[trackObj.name + " - " + trackObj.artists[0].name] = trackObj.id;
+            console.log(trackList);
+        }
+    }
+    res.render("main", {
+        title: "Home",
+        artistList: artistList,
+        trackList: trackList
+    });
 });
 
 app.get("/playlist", (req, res) => {
@@ -201,65 +218,69 @@ app.get("/playlist", (req, res) => {
 });
 
 app.get('/search/artist', (req, res) => {
-   var artistSeed = req.query.artist_seed === undefined ? '4NHQUGzhtTLFvgF5SZesLK' : req.query.artist_seed;
-   var searchOptions = {
+    var artistSeed = req.query.artist_seed === undefined ? '12Chz98pHFMPJEknJQMWvI' : req.query.artist_seed;
+    var searched = false;
+    var searchOptions = {
         url: 'https://api.spotify.com/v1/search?' +
             querystring.stringify({
                 q: artistSeed.replace(' ', '+'),
                 type: 'artist',
             }),
         headers: { 'Authorization': 'Bearer ' + access_token }
+    };
+    request.get(searchOptions, (error, response, body) =>{
+          var obj = JSON.parse(body);
+//          console.log(obj.artists.items);
+          res.render('main', {
+              artists: obj.artists.items,
+              artistList: artistList,
+              trackList: trackList
+          });
+    });
+});
+
+app.get('/search/track', (req, res) => {
+   var trackSeed = req.query.track_seed === undefined ? '4NHQUGzhtTLFvgF5SZesLK' : req.query.track_seed;
+   var searchOptions = {
+        url: 'https://api.spotify.com/v1/search?' +
+            querystring.stringify({
+                q: trackSeed.replace(' ', '+'),
+                type: 'track',
+            }),
+        headers: { 'Authorization': 'Bearer ' + access_token }
    };
    request.get(searchOptions, (error, response, body) =>{
           var obj = JSON.parse(body);
-          console.log(obj.artists.items);
-          res.render("dropdown", {
-             artists: obj.artists.items
+          console.log(obj)
+          res.render("main", {
+               tracks: obj.tracks.items,
+               artistList: artistList,
+               trackList: trackList
           });
    });
 });
 
 app.get('/generate', (req, res) => {
-    var seed = '4NHQUGzhtTLFvgF5SZesLK';
     var color = 'Yellow';
-    res.render("main", {title: "Home"});
-    color = req.query.color;
-    seed = req.query.seed;
-    console.log('color: ' + color);
-    console.log('seed: ' + seed);
 
-    var searchOptions = {
-        url: 'https://api.spotify.com/v1/search?' +
+    var options = {
+        url: 'https://api.spotify.com/v1/recommendations?'+
             querystring.stringify({
-                q: seed.replace(' ', '+'),
-                type: 'track,artist',
+                limit: 10,
+                seed_artists: Object.values(artistList).join(),
+                seed_tracks: Object.values(trackList).join()
             }),
-        headers: { 'Authorization': 'Bearer ' + access_token }
+        headers: { 'Authorization': 'Bearer ' + access_token },
+        json: true
     };
-    request.get(searchOptions, (error, response, body) =>{
-          console.log(body);
+
+    request.get(options, (error, response, body) =>{
+//          console.log(body);
+        res.render("playlist", {
+            title: color,
+            playlist: body.tracks
+        });
     });
-
-
-
-//    var options = {
-//        url: 'https://api.spotify.com/v1/recommendations?'+
-//            querystring.stringify({
-//                limit: 2,
-//                seed_artists: '4NHQUGzhtTLFvgF5SZesLK',
-////                seed_genres: seed,
-//            }),
-//        headers: { 'Authorization': 'Bearer ' + access_token },
-//        json: true
-//    };
-//    var options = {
-//        url: 'https://api.spotify.com/v1/recommendations/available-genre-seeds',
-//        headers: { 'Authorization': 'Bearer ' + access_token },
-//        json: true
-//    };
-//    request.get(options, (error, response, body) =>{
-////          console.log(body);
-//    });
 
 });
 

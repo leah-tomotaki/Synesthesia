@@ -1,27 +1,72 @@
 extends layout
 
 block layout-content
-  div.View.MainView
-    h1.Banner Synesthesia
-    div.Message
-      div.Title
-        h3 Generate a playlist
-        div.NavButtons
-          a(href="/playlist")
-              div.NavButton make playlist
-    div.Message
-      div.Title
-        h3 Enter a color and up to 5 songs or artists
-      form(method='GET' action='/search/artist')
-        label(for='artist_seed') Artist
-        input#artist-seed.form-control(type='text', placeholder='Hippo Campus', name='artist_seed')
-        button.btn search
-        div.form-group
-            label(for='color') Color
-            input#color.form-control(type='text', placeholder='Yellow', name='color')
-        div.form-group
-            label(for='seed') Song
-            input#seed.form-control(type='text', placeholder='Driving to Hawaii', name='song-seed')
-            button.btn add
-        div.NavButtons
-            button.NavButton(type="submit") generate
+    div.View.MainView
+        h1.Banner Synesthesia
+        div.Message
+            div.Title
+                h3 Generate a playlist
+            div.NavButtons
+                a(href="/playlist")
+                     div.NavButton make playlist
+        div.Message
+            div.Title
+                h3 Enter a color and up to 5 tracks or artists
+            -var foundArtists=artists
+            form(method='GET' action='/search/artist')
+                if !foundArtists
+                    label(for='artist_seed') Artist
+                    input#artist-seed.form-control(type='text', placeholder='Hippo Campus', name='artist_seed')
+                    button.btn search
+                    foundArtists=undefined
+            form(method='GET' action='/home')
+                if foundArtists
+                    label(for='artist') Artist
+                    select(name='artist')
+                        each artist in artists
+                            option(value=artist)=artist.name
+                    input(type='submit' value='Submit')
+
+            -var foundTracks=tracks
+            form(method='GET' action='/search/track')
+                if !foundTracks
+                    label(for='track_seed') Track
+                    input#track-seed.form-control(type='text', placeholder='Driving to Hawaii', name='track_seed')
+                    button.btn search
+                    foundTracks=undefined
+            form(method='GET' action='/home')
+                if foundTracks
+                    label(for='track') Track
+                    select(name='track')
+                        each track in tracks
+                            option(value=track)=track.name + " - " + track.artists[0].name
+                    input(type='submit' value='Submit')
+            div.form-group
+                label(for='color') Color
+                select(name='color')
+                    option='Pink'
+                    option='Red'
+                    option='Orange'
+                    option='Yellow'
+                    option='Green'
+                    option='Blue'
+                    option='Indigo'
+                    option='Violet'
+                    option='Black'
+                    option='White'
+                    option='Grey'
+                input#color.form-control(type='submit' value='Submit')
+
+
+            div.seeds
+                h3 My Custom Playlist
+                    if(trackList!= undefined && trackList.length != 0)
+                        each track in Object.keys(trackList)
+                            p #{track}
+                    if(artistList!= undefined && artistList.length != 0)
+                        each artist in Object.keys(artistList)
+                            p #{artist}
+
+            form(method='GET' action='/generate')
+                div.NavButtons
+                    button.NavButton(type="submit") generate

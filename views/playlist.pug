@@ -1,0 +1,11 @@
+extends layout
+
+block layout-content
+    div.View.PlaylistView(style=" background: url('swirls.jpg') left bottom;" )
+
+        div.Message
+            div.Title
+                h1 #{title}
+            div
+                for track in playlist
+                    p #{track.name} - #{track.artists[0].name}
