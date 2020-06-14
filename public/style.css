@@ -161,3 +161,8 @@ a {
   background: url("watercolor.jpg") left bottom;
   background-size: cover;
 }
+
+.PlaylistView {
+  background: left bottom;
+  background-size: cover;
+}
