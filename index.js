@@ -30,12 +30,9 @@ app.use(express.static(__dirname + '/public'))
 /**
  *  Constants
  */
-//const CLIENT_ID = 'CLIENT_ID'
-//const CLIENT_SECRET = 'CLIENT_SECRET'
-//const REDIRECT_URI = 'REDIRECT_URI'
-CLIENT_ID = 'd1ab6b53b0054febb8e5879090c69481'
-CLIENT_SECRET = 'bb9729962a4b45a0b638854d5459f988'
-REDIRECT_URI = 'http://localhost:8888/callback'
+const CLIENT_ID = 'CLIENT_ID'
+const CLIENT_SECRET = 'CLIENT_SECRET'
+const REDIRECT_URI = 'REDIRECT_URI'
 /**
  *  Helper Functions
  */
@@ -266,7 +263,7 @@ app.get('/generate', (req, res) => {
     var options = {
         url: 'https://api.spotify.com/v1/recommendations?'+
             querystring.stringify({
-                limit: 10,
+                limit: 100,
                 seed_artists: Object.values(artistList).join(),
                 seed_tracks: Object.values(trackList).join()
             }),
