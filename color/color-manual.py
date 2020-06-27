@@ -1,19 +1,18 @@
-import colorgram
-import json
 import sys
-from PIL import Image
+import json
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+import cv2
+from collections import Counter
 
-def get_image(image_path):
-    image = Image.open(image_path)
-    image = image.resize((150, 150), Image.ANTIALIAS)
-    image.save(image_path)
-    return image
+# %matplotlib inline
+def RGB2HEX(color):
+    return "#{:02x}{:02x}{:02x}".format(int(color[0]), int(color[1]), int(color[2]))
 
-def RGB2HSV(rgb_colors):
-
+def RGB2HSV(r, g, b):
     # R, G, B values are divided by 255
     # to change the range from 0..255 to 0..1:
-    r, g, b = rgb_colors[0] / 255.0, rgb_colors[1] / 255.0, rgb_colors[2] / 255.0
+    r, g, b = r / 255.0, g / 255.0, b / 255.0
 
     # h, s, v = hue, saturation, value
     cmax = max(r, g, b)  # maximum of r, g, b
@@ -46,6 +45,35 @@ def RGB2HSV(rgb_colors):
     v = cmax * 100
     return (h,s,v)
 
+
+def get_image(image_path):
+    image = cv2.imread(image_path)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    return image
+
+
+def get_colors(image, num_colors, show_chart=False):
+    modified_image = cv2.resize(image, (100, 100), interpolation=cv2.INTER_AREA)
+    modified_image = modified_image.reshape(modified_image.shape[0] * modified_image.shape[1], 3)
+
+    clf = KMeans(n_clusters=num_colors)
+    labels = clf.fit_predict(modified_image)
+
+    counts = Counter(labels)
+
+    center_colors = clf.cluster_centers_
+    # We get ordered colors by iterating through the keys
+    ordered_colors = [center_colors[i] for i in counts.keys()]
+    hex_colors = [RGB2HEX(ordered_colors[i]) for i in counts.keys()]
+    # rgb_colors = [ordered_colors[i] for i in counts.keys()]
+    hsv_colors = [RGB2HSV(ordered_colors[i][0], ordered_colors[i][1], ordered_colors[i][2]) for i in counts.keys()]
+    # print(hsv_colors)
+    if (show_chart):
+        plt.figure(figsize=(8, 6))
+        plt.pie(counts.values(), labels=hex_colors, colors=hex_colors)
+    return hsv_colors
+
+
 COLORS = {
     'RED': (((0, 51, 30), (20, 100, 100)), ((346, 51, 30), (360, 100, 100))),
     'ORANGE': ((21, 30, 30), (45, 100, 100)),
@@ -53,7 +81,7 @@ COLORS = {
     'GREEN': ((66, 30, 30), (175, 100, 100)),
     'BLUE': ((176, 30, 30), (275, 100, 100)),
     'PURPLE': ((276, 30, 30), (310, 100, 100)),
-    'PINK': (((311, 10, 30), (360, 50, 100)), ((0, 30, 76), (20, 50, 100)), ((346, 51, 76), (360, 100, 100))),
+    'PINK': (((311, 30, 30), (345, 100, 100)), ((0, 30, 76), (20, 50, 100)), ((346, 51, 76), (360, 100, 100))),
     'GREY': ((0, 0, 26), (360, 30, 94)),
     'BLACK': ((0, 0, 0), (360, 100, 25)),
     'WHITE': ((0, 0, 95), (360, 5, 100)),
@@ -81,10 +109,10 @@ def is_color(hsv_color, selected_color_name):
     return False
 
 def has_color(image_path, selected_color_name, num_colors=4):
-    image_colors = colorgram.extract(get_image(image_path), num_colors)
+    image = get_image(image_path)
+    image_colors = get_colors(image, num_colors)
     for color in image_colors:
-        print(color)
-        if is_color(RGB2HSV(color.rgb), selected_color_name):
+        if is_color(color, selected_color_name):
             return True
     return False
 
@@ -100,9 +128,7 @@ def get_covers(image_paths, selected_color_name, num_tracks=10):
                 break
     return selected_tracks
 
-# print(has_color('sea.jpg', 'YELLOW'))
 
-# print( colorgram.extract('sea.jpg', 4)[0])
 tracks = json.loads(sys.argv[1])
 selected_color_name = sys.argv[2]
 num_tracks = sys.argv[3]
@@ -112,4 +138,3 @@ for track in tracks:
     image_paths.append(track['album']['images'][0]['url'])
 
 print(get_covers(image_paths, selected_color_name, num_tracks))
-
