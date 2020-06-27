@@ -9,6 +9,7 @@ const querystring = require('querystring');
 const request = require('request');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
+var spawn = require('child_process').spawn;
 
 /**
  * App Variables
@@ -16,7 +17,6 @@ const cors = require('cors');
 
 const app = express();
 const port = process.PORT || "8888";
-
 /**
  *  App Configuration
  */
@@ -30,9 +30,12 @@ app.use(express.static(__dirname + '/public'))
 /**
  *  Constants
  */
-const CLIENT_ID = 'CLIENT_ID'
-const CLIENT_SECRET = 'CLIENT_SECRET'
-const REDIRECT_URI = 'REDIRECT_URI'
+//const CLIENT_ID = 'CLIENT_ID'
+//const CLIENT_SECRET = 'CLIENT_SECRET'
+//const REDIRECT_URI = 'REDIRECT_URI'
+CLIENT_ID = 'd1ab6b53b0054febb8e5879090c69481'
+CLIENT_SECRET = 'bb9729962a4b45a0b638854d5459f988'
+REDIRECT_URI = 'http://localhost:8888/callback'
 /**
  *  Helper Functions
  */
@@ -258,12 +261,12 @@ app.get('/search/track', (req, res) => {
 });
 
 app.get('/generate', (req, res) => {
-    var color = 'Yellow';
+    var color = 'YELLOW';
 
     var options = {
         url: 'https://api.spotify.com/v1/recommendations?'+
             querystring.stringify({
-                limit: 100,
+                limit: 5,
                 seed_artists: Object.values(artistList).join(),
                 seed_tracks: Object.values(trackList).join()
             }),
@@ -272,13 +275,29 @@ app.get('/generate', (req, res) => {
     };
 
     request.get(options, (error, response, body) =>{
-//          console.log(body);
-        res.render("playlist", {
-            title: color,
-            playlist: body.tracks
+//        console.log(body);
+        var dataToSend;
+        var python = spawn('python', ['color/color.py', JSON.stringify(body.tracks),
+                    color,
+                    1]);
+
+        console.log('here');
+        python.stdout.on('data', function (data) {
+            console.log('Pipe data from python script ...');
+            dataToSend = data.toString();
+//            res.send(dataToSend);
+        });
+
+        python.on('close', (code) => {
+            console.log('child process close all stdio with code' + code);
+            // send data to browser
+            res.send(dataToSend);
+//            res.render("playlist", {
+//                title: color,
+//                playlist: dataToSend
+//            });
         });
     });
-
 });
 
 /**
